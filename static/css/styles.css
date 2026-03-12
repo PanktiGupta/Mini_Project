@@ -1,0 +1,35 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        display: none;
+    }
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.card {
+    border-radius: 0.5rem;
+}
+
+.table thead th {
+    background-color: #f1f3f5;
+}
+
+.stats-card {
+    border-left: 4px solid rgba(13, 110, 253, 0.3);
+}
+
+.messages-container .alert {
+    margin-bottom: 0.5rem;
+}
+

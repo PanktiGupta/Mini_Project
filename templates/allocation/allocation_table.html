@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-8">
+        <h2 class="h4">Allocation Table</h2>
+        <p class="text-muted mb-0">All generated invigilation duties across exams.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{% url 'allocation:export_allocations_csv' %}"
+           class="btn btn-outline-success mt-2">
+            Export Allocations CSV
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped mb-0">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Exam</th>
+                    <th>Date</th>
+                    <th>Slot</th>
+                    <th>Room</th>
+                    <th>Name</th>
+                    <th>Designation</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for alloc in allocations %}
+                    {% with person=alloc.faculty|default:alloc.phd_scholar %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ alloc.exam.course_name }}</td>
+                        <td>{{ alloc.exam.date }}</td>
+                        <td>{{ alloc.exam.get_time_slot_display }}</td>
+                        <td>{{ alloc.classroom.name }}</td>
+                        <td>{{ person.name }}</td>
+                        <td>
+                            {% if alloc.faculty %}
+                                {{ alloc.faculty.get_designation_display }}
+                            {% else %}
+                                PhD Scholar
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endwith %}
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            No allocations generated yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-8">
+        <h2 class="h4">Seating Plan</h2>
+        <p class="text-muted mb-0">Roll number ranges assigned per room across exams.</p>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped mb-0">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Exam</th>
+                    <th>Date</th>
+                    <th>Slot</th>
+                    <th>Room</th>
+                    <th>Roll From</th>
+                    <th>Roll To</th>
+                    <th>Students</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for s in seating_allocations %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ s.exam.course_name }}</td>
+                        <td>{{ s.exam.date }}</td>
+                        <td>{{ s.exam.get_time_slot_display }}</td>
+                        <td>{{ s.classroom.name }}</td>
+                        <td>{{ s.start_roll }}</td>
+                        <td>{{ s.end_roll }}</td>
+                        <td>{{ s.capacity_used }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">
+                            No seating plan generated yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

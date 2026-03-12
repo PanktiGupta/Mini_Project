@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="h4 mb-1">Dashboard Overview</h2>
+        <p class="text-muted mb-0">Quick snapshot of invigilation resources and allocations.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small">Faculty</div>
+                        <div class="fs-3 fw-semibold">{{ faculty_count }}</div>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary">Total</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small">PhD Scholars</div>
+                        <div class="fs-3 fw-semibold">{{ phd_count }}</div>
+                    </div>
+                    <span class="badge bg-info-subtle text-info">Total</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small">Rooms</div>
+                        <div class="fs-3 fw-semibold">{{ classroom_count }}</div>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning">Capacity</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small">Exams</div>
+                        <div class="fs-3 fw-semibold">{{ exam_count }}</div>
+                    </div>
+                    <span class="badge bg-success-subtle text-success">Scheduled</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                Detained Alert System
+            </div>
+            <div class="card-body">
+                <ul class="mb-3">
+                    <li><strong>Round 1 - Doubt round:</strong> triggered when capacity seems sufficient; monitor student queries and late entries.</li>
+                    <li><strong>Round 2 - Question paper shortage alert:</strong> triggered when expected students exceed total classroom capacity for an exam.</li>
+                </ul>
+                <a href="{% url 'allocation:exam_list' %}" class="btn btn-outline-light btn-sm">Review Exam Capacity</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-secondary text-white">
+                Duty Allocation &amp; UFM Rules
+            </div>
+            <div class="card-body">
+                <ul class="mb-3">
+                    <li>No overlapping duties per date &amp; slot.</li>
+                    <li>Per room: 1 Professor, 2 Assistant Professors, 3 PhD Scholars.</li>
+                    <li>Minimum 1-slot gap for Professors and PhD Scholars.</li>
+                    <li>UFM history and previous duty counts used for fair, weighted distribution.</li>
+                </ul>
+                <a href="{% url 'allocation:run_allocation' %}" class="btn btn-light btn-sm">Generate Allocation</a>
+                <a href="{% url 'allocation:ufm_history' %}" class="btn btn-outline-light btn-sm">View UFM History</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

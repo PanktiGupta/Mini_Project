@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-8">
+        <h2>Duty Allocation Result</h2>
+        {% if exam %}
+            <p class="text-muted">
+                Exam: <strong>{{ exam.course_name }}</strong> |
+                Date: {{ exam.date }} |
+                Slot: {{ exam.get_time_slot_display }}
+            </p>
+        {% endif %}
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{% url 'allocation:export_allocations_csv' %}{% if exam %}?exam_id={{ exam.id }}{% endif %}"
+           class="btn btn-outline-success mt-2">
+            Export CSV
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>Serial Number</th>
+                        <th>Faculty Name</th>
+                        <th>Designation</th>
+                        <th>Date</th>
+                        <th>Time Slot</th>
+                        <th>Room Number</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for alloc in allocations %}
+                        {% with person=alloc.faculty|default:alloc.phd_scholar %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ person.name }}</td>
+                            <td>
+                                {% if alloc.faculty %}
+                                    {{ alloc.faculty.get_designation_display }}
+                                {% else %}
+                                    PhD Scholar
+                                {% endif %}
+                            </td>
+                            <td>{{ alloc.exam.date }}</td>
+                            <td>{{ alloc.exam.get_time_slot_display }}</td>
+                            <td>{{ alloc.classroom.name }}</td>
+                        </tr>
+                        {% endwith %}
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                No duty allocations found. Run the auto allocation first.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                Seating Allocation (Roll Number Ranges)
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Room</th>
+                        <th>Roll Number From</th>
+                        <th>Roll Number To</th>
+                        <th>Students Seated</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in seating_allocations %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ s.classroom.name }}</td>
+                            <td>{{ s.start_roll }}</td>
+                            <td>{{ s.end_roll }}</td>
+                            <td>{{ s.capacity_used }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                No seating allocation generated.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

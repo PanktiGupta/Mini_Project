@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-8">
+        <h2>Auto Duty Allocation</h2>
+        <p class="text-muted">Select an exam to generate invigilation duties based on defined constraints.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">Run Allocation</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Generate Duties</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

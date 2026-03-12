@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <h2>Exam Schedule</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header">Add Exam</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary w-100">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header">Exam List</div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Course</th>
+                        <th>Date</th>
+                        <th>Slot</th>
+                        <th>Time</th>
+                        <th>Expected Students</th>
+                        <th>Rooms</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for e in exam_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ e.course_name }}</td>
+                            <td>{{ e.date }}</td>
+                            <td>{{ e.get_time_slot_display }}</td>
+                            <td>{{ e.start_time }} - {{ e.end_time }}</td>
+                            <td>{{ e.expected_students }}</td>
+                            <td>
+                                {% for room in e.classrooms.all %}
+                                    <span class="badge text-bg-secondary">{{ room.name }}</span>
+                                {% empty %}
+                                    <span class="text-muted">No rooms</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No exams scheduled yet.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

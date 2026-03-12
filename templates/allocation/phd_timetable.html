@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<h2>My Exam Duty Timetable</h2>
+
+<table class="table table-bordered">
+<thead>
+<tr>
+<th>Date</th>
+<th>Time Slot</th>
+<th>Classroom</th>
+<th>Exam</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for alloc in allocations %}
+
+<tr>
+<td>{{ alloc.exam.date }}</td>
+<td>{{ alloc.exam.get_time_slot_display }}</td>
+<td>{{ alloc.classroom.name }}</td>
+<td>{{ alloc.exam }}</td>
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="4">No duties assigned.</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+
+{% endblock %}

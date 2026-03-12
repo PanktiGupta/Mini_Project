@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <h2>Classrooms</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header">Add Classroom</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary w-100">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header">Classroom List</div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Capacity</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for c in classroom_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ c.name }}</td>
+                            <td>{{ c.capacity }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No classrooms added yet.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

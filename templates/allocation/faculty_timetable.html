@@ -1,0 +1,33 @@
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<h2>My Faculty Duty Timetable</h2>
+
+<table border = "1">
+<tr>
+<th>Date</th>
+<th>Time Slot</th>
+<th>Classroom</th>
+</tr>
+
+{% for alloc in allocations %}
+
+<tr>
+<td>{{ alloc.exam.date }}</td>
+<td>{{ alloc.exam.get_time_slot_display }}</td>
+<td>{{ alloc.classroom.name }}</td>
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="3">No duties assigned</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}
