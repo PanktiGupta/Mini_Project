@@ -1,14 +1,19 @@
 from faker import Faker
 from django.contrib.auth.models import User
-from allocation.models import Faculty, PhD_Scholar, Classroom
+from allocation.models import (
+    Classroom,
+    Faculty,
+    PhDScholar,
+    
+)
+fake = Faker("en-IN")
 
-fake = Faker()
 
 def run():
 
     # delete old data
     Faculty.objects.all().delete()
-    PhD_Scholar.objects.all().delete()
+    PhDScholar.objects.all().delete()
     Classroom.objects.all().delete()
     User.objects.filter(username__startswith="faculty").delete()
     User.objects.filter(username__startswith="phd").delete()
@@ -36,7 +41,7 @@ def run():
             password="12345"
         )
 
-        PhD_Scholar.objects.create(
+        PhDScholar.objects.create(
             user=user,
             name=fake.name(),
             max_duties=3
