@@ -44,7 +44,7 @@ class Faculty(models.Model):
         validators=[MinValueValidator(0)]
     )
     is_active = models.BooleanField(default=True)
-
+    must_change_password = models.BooleanField(default=True)
     class Meta:
         verbose_name = "Faculty"
         verbose_name_plural = "Faculty Members"
@@ -70,7 +70,7 @@ class PhDScholar(models.Model):
 
     max_duties = models.IntegerField(default=3, validators=[MinValueValidator(0)])
     is_active = models.BooleanField(default=True)
-    
+    must_change_password = models.BooleanField(default=True)
     class Meta:
         verbose_name = "PhD Scholar"
         verbose_name_plural = "PhD Scholars"

@@ -8,6 +8,8 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.shortcuts import render, redirect
+
 
 from .forms import (
     AllocationRunForm,
@@ -15,6 +17,7 @@ from .forms import (
     ExamScheduleForm,
     FacultyForm,
     PhDScholarForm,
+    
 )
 from .models import (
     Classroom,
@@ -27,6 +30,8 @@ from .models import (
     UFMRecord,
 )
 from .services import allocate_duties_for_exam
+
+from .forms import CustomPasswordChangeForm
 
 
 # ─────────────────────────────────────
@@ -58,6 +63,71 @@ def redirect_dashboard(request):
         return redirect("allocation:phd_timetable")
     return redirect("allocation:login")
 
+
+# ─────────────────────────────────────
+# Change Password View
+# ─────────────────────────────────────
+@login_required(login_url="/login/")
+def change_password(request):
+    if request.method == "POST":
+        form = CustomPasswordChangeForm(request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data["new_password1"]
+            request.user.set_password(new_password)
+            request.user.save()
+
+            if hasattr(request.user, "faculty"):
+                request.user.faculty.must_change_password = False
+                request.user.faculty.save()
+            elif hasattr(request.user, "phdscholar"):
+                request.user.phdscholar.must_change_password = False
+                request.user.phdscholar.save()
+
+            
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+
+            messages.success(request, "Password changed successfully!")
+            return redirect("allocation:redirect_dashboard")
+    else:
+        form = CustomPasswordChangeForm()
+
+    return render(request, "allocation/change_password.html", {
+        "form": form
+    })
+
+
+# ─────────────────────────────────────
+# Update redirect_dashboard — force password change
+# ─────────────────────────────────────
+@login_required(login_url="/login/")
+def redirect_dashboard(request):
+    if request.user.is_superuser:
+        return redirect("allocation:dashboard")
+
+    
+    if Faculty.objects.filter(user=request.user).exists():
+        faculty = request.user.faculty
+        if faculty.must_change_password:              
+            messages.warning(
+                request,
+                "Please change your default password before continuing."
+            )
+            return redirect("allocation:change_password")
+        return redirect("allocation:faculty_timetable")
+
+    
+    if PhDScholar.objects.filter(user=request.user).exists():
+        phd = request.user.phdscholar
+        if phd.must_change_password:                 
+            messages.warning(
+                request,
+                "Please change your default password before continuing."
+            )
+            return redirect("allocation:change_password")
+        return redirect("allocation:phd_timetable")
+
+    return redirect("allocation:login")
 
 # ─────────────────────────────────────
 # Faculty List & Create
@@ -373,8 +443,6 @@ def seating_plan(request):
         "seating_allocations": seating,
         "exam":                exam,
     })
-
-
 # ─────────────────────────────────────
 # UFM History
 # ─────────────────────────────────────

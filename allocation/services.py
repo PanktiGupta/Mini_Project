@@ -193,36 +193,91 @@ class DutyAllocator:
     def _pick_weighted_faculty(self, designation: str, needed: int) -> List[Faculty]:
         source        = self.professors if designation == Designation.PROFESSOR else self.assistants
         selected: List[Faculty] = []
-        available_ids = [f.user.pk for f in source]        
+        available_ids = [
+            f.user.pk for f in source
+            if f.user.pk in self.faculty_state
+        ]        
 
         while len(selected) < needed and available_ids:
-            candidates = [
-                uid for uid in available_ids
-                if self._can_assign_faculty(self.faculty_state[uid]["obj"])
-            ]
+            candidates = []
+            for uid in available_ids:
+                faculty_data = self.faculty_state.get(uid)
+                if not faculty_data:
+                    continue
+
+                obj = faculty_data.get("obj")
+                if not obj:
+                    continue
+
+                if obj.designation != designation:
+                    continue
+
+                if self._can_assign_faculty(obj):
+                    candidates.append(uid)
             if not candidates:
                 break
-            weights   = [self._weight_faculty(uid) for uid in candidates]
+            weights = [self._weight_faculty(uid) for uid in candidates]
+            if not any(weights):
+                break
             chosen_id = random.choices(candidates, weights=weights, k=1)[0]
-            chosen    = self.faculty_state[chosen_id]["obj"]
+            chosen_data = self.faculty_state.get(chosen_id)
+            if not chosen_data:
+                available_ids.remove(chosen_id)
+                continue
+
+            chosen = chosen_data.get("obj")
+            if not chosen:
+                available_ids.remove(chosen_id)
+                continue
             selected.append(chosen)
             available_ids.remove(chosen_id)
 
         return selected
+    
+
     def _pick_weighted_phd(self, needed: int) -> List[PhDScholar]:
         selected: List[PhDScholar] = []
-        available_ids = [p.user.pk for p in self.phd_scholars]  
+
+        # Only keep valid IDs
+        available_ids = [
+            p.user.pk for p in self.phd_scholars
+            if p.user.pk in self.phd_state
+        ]
 
         while len(selected) < needed and available_ids:
-            candidates = [
-                uid for uid in available_ids
-                if self._can_assign_phd(self.phd_state[uid]["obj"])
-            ]
+            candidates = []
+
+            for uid in available_ids:
+                phd_data = self.phd_state.get(uid)
+                if not phd_data:
+                    continue
+
+                obj = phd_data.get("obj")
+                if not obj:
+                    continue
+
+                if self._can_assign_phd(obj):
+                    candidates.append(uid)
+
             if not candidates:
                 break
-            weights   = [self._weight_phd(uid) for uid in candidates]
+
+            weights = [self._weight_phd(uid) for uid in candidates]
+            if not any(weights):
+                break
+
             chosen_id = random.choices(candidates, weights=weights, k=1)[0]
-            chosen    = self.phd_state[chosen_id]["obj"]
+
+            chosen_data = self.phd_state.get(chosen_id)
+            if not chosen_data:
+                available_ids.remove(chosen_id)
+                continue
+
+            chosen = chosen_data.get("obj")
+            if not chosen:
+                available_ids.remove(chosen_id)
+                continue
+
             selected.append(chosen)
             available_ids.remove(chosen_id)
 
@@ -258,32 +313,51 @@ class DutyAllocator:
             alloc = DutyAllocation.objects.create(
                 exam=self.exam,
                 classroom=room,
-                assigned_to=f.user,                         
-                role=Role.FACULTY,                          
+                assigned_to=f.user,
+                role=Role.FACULTY,
             )
+        
             created_allocations.append(alloc)
-            self.faculty_state[f.user.pk]["assigned_this_exam"] = True
-            self.duties_per_person_date[f"F-{f.user.pk}"].add(self.exam.pk)
+            if faculty_data := self.faculty_state.get(f.user.pk):
+                faculty_data["assigned_this_exam"] = True
+
+            # Safe set update (prevents missing key crash)
+            self.duties_per_person_date.setdefault(
+                f"F-{f.user.pk}", set()
+            ).add(self.exam.pk)
 
         for p in phds:
             alloc = DutyAllocation.objects.create(
                 exam=self.exam,
                 classroom=room,
-                assigned_to=p.user,                         
-                role=Role.PHD,                              
+                assigned_to=p.user,
+                role=Role.PHD,
             )
             created_allocations.append(alloc)
-            self.phd_state[p.user.pk]["assigned_this_exam"] = True
-            self.duties_per_person_date[f"P-{p.user.pk}"].add(self.exam.pk)
+
+            # Safe update (prevents KeyError)
+            if phd_data := self.phd_state.get(p.user.pk):
+            
+                phd_data["assigned_this_exam"] = True
+
+            # Safe set update
+            self.duties_per_person_date.setdefault(
+                f"P-{p.user.pk}", set()
+            ).add(self.exam.pk)
+ 
+
+
     def _generate_seating(self) -> tuple[List[SeatingAllocation], List[str]]:
+        SeatingAllocation.objects.filter(exam=self.exam).delete()
         seating_allocations: List[SeatingAllocation] = []
         alerts: List[str] = []
-
+        
         expected = self.exam.expected_students or 0
         if expected <= 0:
             return seating_allocations, alerts
 
-        total_capacity = self.exam.total_classroom_capacity
+        total_capacity = self.exam.total_classroom_capacity or 0
+
         if total_capacity < expected:
             alerts.append(
                 "Detained alert (shortage): expected students exceed total "
@@ -295,15 +369,26 @@ class DutyAllocator:
                 "for late entries."
             )
 
-        remaining    = expected
+        remaining = expected
         current_roll = 1
 
-        for room in self.exam.classrooms.filter(is_available=True).order_by("name"):  
+        classrooms = self.exam.classrooms.filter(is_available=True).order_by("name")
+
+        if not classrooms.exists():
+            alerts.append("No available classrooms found.")
+            return seating_allocations, alerts
+
+        for room in classrooms:
             if remaining <= 0:
                 break
-            seats_for_room = min(room.capacity, remaining)
-            start_roll     = current_roll
-            end_roll       = current_roll + seats_for_room - 1
+
+            room_capacity = room.capacity or 0
+            if room_capacity <= 0:
+                continue  # skip invalid rooms safely
+
+            seats_for_room = min(room_capacity, remaining)
+            start_roll = current_roll
+            end_roll = current_roll + seats_for_room - 1
 
             seating = SeatingAllocation.objects.create(
                 exam=self.exam,
@@ -313,8 +398,9 @@ class DutyAllocator:
                 capacity_used=seats_for_room,
             )
             seating_allocations.append(seating)
+
             current_roll = end_roll + 1
-            remaining   -= seats_for_room
+            remaining -= seats_for_room
 
         if remaining > 0:
             alerts.append(
@@ -322,34 +408,49 @@ class DutyAllocator:
                 "within available classroom capacities."
             )
 
-        return seating_allocations, alerts
-    
+        return seating_allocations, alerts    
     def run(self) -> AllocationResult:
         created_allocations: List[DutyAllocation] = []
-        detained_alerts: List[str]                = []
-        capacity_warnings: List[str]              = []
+        detained_alerts: List[str] = []
+        capacity_warnings: List[str] = []
 
-        # Capacity warning
-        if (
-            self.exam.expected_students
-            and self.exam.total_classroom_capacity < self.exam.expected_students
-        ):
+        expected = self.exam.expected_students or 0
+        total_capacity = self.exam.total_classroom_capacity or 0
+
+        # Capacity warning (safe)
+        if expected and total_capacity < expected:
             capacity_warnings.append(
-                f"Total capacity ({self.exam.total_classroom_capacity}) "
-                f"is less than expected students ({self.exam.expected_students}) "
+                f"Total capacity ({total_capacity}) "
+                f"is less than expected students ({expected}) "
                 f"for {self.exam}."
             )
 
-        # Allocate duties per classroom
-        for room in self.exam.classrooms.filter(is_available=True).order_by("name"):  
-            self._assign_to_room(room, created_allocations)
+        classrooms = self.exam.classrooms.filter(is_available=True).order_by("name")
+
+        if not classrooms.exists():
+            detained_alerts.append("No available classrooms for allocation.")
+            return AllocationResult(
+                created_allocations=created_allocations,
+                seating_allocations=[],
+                detained_alerts=detained_alerts,
+                capacity_warnings=capacity_warnings,
+            )
+
+        # Allocate duties per classroom (safe execution)
+        for room in classrooms:
+            try:
+                self._assign_to_room(room, created_allocations)
+            except ValidationError as e:
+                detained_alerts.append(f"{room.name}: {str(e)}")
+                continue  # don't stop entire process
 
         # Seating + alerts
         seating_allocations, alerts = self._generate_seating()
         detained_alerts.extend(alerts)
 
-        self._send_allocation_emails(created_allocations)
-
+        # Send emails only if something was created
+        if created_allocations:
+            self._send_allocation_emails(created_allocations)
 
         return AllocationResult(
             created_allocations=created_allocations,
@@ -357,20 +458,20 @@ class DutyAllocator:
             detained_alerts=detained_alerts,
             capacity_warnings=capacity_warnings,
         )
-    
+        
     def _send_allocation_emails(
-        self, allocations: List[DutyAllocation]
-    ) -> None:
-        """
-        Group allocations by user and send
-        one email per person with all duties listed.
-        """
-        user_allocations: dict = defaultdict(list)
-        for alloc in allocations:
-            user_allocations[alloc.assigned_to].append(alloc)
+            self, allocations: List[DutyAllocation]
+        ) -> None:
+            """
+            Group allocations by user and send
+            one email per person with all duties listed.
+            """
+            user_allocations: dict = defaultdict(list)
+            for alloc in allocations:
+                user_allocations[alloc.assigned_to].append(alloc)
 
-        for user, user_allocs in user_allocations.items():
-            send_duty_allocation_email(user, user_allocs)
+            for user, user_allocs in user_allocations.items():
+                send_duty_allocation_email(user, user_allocs)
 
 @transaction.atomic
 def allocate_duties_for_exam(exam: ExamSchedule) -> AllocationResult:

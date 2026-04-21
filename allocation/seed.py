@@ -25,26 +25,29 @@ def run():
             password="12345"
         )
 
-        Faculty.objects.create(
+        Faculty.objects.create (
             user=user,
             name=fake.name(),
             email=fake.email(),
             designation="PROFESSOR",
             department="CSE",
-            duty_quota=5
-        )
+            duty_quota=5,
+            is_active=True,
+            must_change_password=True,
+         )
 
     # create phd scholars
     for i in range(15):
         user = User.objects.create_user(
             username=f"phd{i}",
-            password="12345"
+            password="12345",
         )
 
         PhDScholar.objects.create(
             user=user,
             name=fake.name(),
-            max_duties=3
+            max_duties=3,
+            must_change_password=True,
         )
 
     # create classrooms

@@ -35,7 +35,11 @@ urlpatterns =[
 
     path("run-allocation/",  views.run_allocation,  name="run_allocation"),
     path("allocation-table/",views.allocation_table,name="allocation_table"),   
-    path("seating-plan/",    views.seating_plan,    name="seating_plan"),
+    
+    path("seating/", views.seating_plan, name="seating_plan"),
+    
+    path("change-password/", views.change_password, name="change_password"), 
+
     path("export-csv/",      views.export_allocations_csv, name="export_allocations_csv"),
 
     
