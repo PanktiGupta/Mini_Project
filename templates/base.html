@@ -263,6 +263,15 @@
                             Duty Quota: {{ request.user.faculty.duty_quota }}
                         </small>
                     </li>
+                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                            {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}"
+                        href="{% url 'allocation:change_password' %}">
+                            <i class="bi bi-key me-2"></i>Change Password
+                        </a>
+                    </li>
 
                 {% elif request.user.phdscholar %}
                 {# ═══ PHD SIDEBAR ═══ #}
@@ -303,6 +312,15 @@
                             <i class="bi bi-clipboard-check me-1"></i>
                             Max Duties: {{ request.user.phdscholar.max_duties }}
                         </small>
+                    </li>
+                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-white
+                            {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}"
+                        href="{% url 'allocation:change_password' %}">
+                            <i class="bi bi-key me-2"></i>Change Password
+                        </a>
                     </li>
 
                 {% endif %}

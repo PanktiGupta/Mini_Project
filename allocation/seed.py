@@ -32,13 +32,16 @@ def run():
             designation="PROFESSOR",
             department="CSE",
             duty_quota=5
+            is_active=True,
+            must_change_password=True,
         )
 
     # create phd scholars
     for i in range(15):
         user = User.objects.create_user(
             username=f"phd{i}",
-            password="12345"
+            password="12345",
+            must_change_password=True,
         )
 
         PhDScholar.objects.create(

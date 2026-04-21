@@ -1,7 +1,11 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Classroom, ExamSchedule, Faculty, PhDScholar
+from .models import Classroom, ExamSchedule, Faculty, PhDScholar 
+from django.contrib.auth.forms import PasswordChangeForm
+
 from django.utils import timezone
+
+
 
 
 
@@ -27,7 +31,7 @@ class UserFieldsMixin:
         }
 
     def clean_email(self):
-        """✅ Validate email is unique per user (skip current user on edit)"""
+        
         email = self.cleaned_data.get("email")
         instance = getattr(self, "instance", None)
 
@@ -36,8 +40,7 @@ class UserFieldsMixin:
 
         qs = User.objects.filter(email=email)
         if user_id:
-            qs = qs.exclude(pk=user_id)     # ✅ exclude self on update
-
+            qs = qs.exclude(pk=user_id)     
         if qs.exists():
             raise forms.ValidationError("A user with this email already exists.")
         return email
@@ -197,3 +200,33 @@ class AllocationRunForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select"}),
     )
 
+
+
+class CustomPasswordChangeForm(forms.Form):
+    new_password1 = forms.CharField(
+        label="New Password",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "Enter new password"
+        })
+    )
+    new_password2 = forms.CharField(
+        label="Confirm New Password",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "Confirm new password"
+        })
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        p1 = cleaned_data.get("new_password1")
+        p2 = cleaned_data.get("new_password2")
+
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError("Passwords do not match.")
+
+        if p1 and len(p1) < 6:
+            raise forms.ValidationError("Password must be at least 6 characters.")
+
+        return cleaned_data
